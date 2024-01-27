@@ -13,62 +13,60 @@ const (
 	SAME_CHAR_SEPARATOR    = '1'
 )
 
-type charRepresentation [2]int
-
-var charBindings = map[string]charRepresentation{
-	"a": {2, 1},
-	"b": {2, 2},
-	"c": {2, 3},
-	"d": {3, 1},
-	"e": {3, 2},
-	"f": {3, 3},
-	"g": {4, 1},
-	"h": {4, 2},
-	"i": {4, 3},
-	"j": {5, 1},
-	"k": {5, 2},
-	"l": {5, 3},
-	"m": {6, 1},
-	"n": {6, 2},
-	"o": {6, 3},
-	"p": {7, 1},
-	"q": {7, 2},
-	"r": {7, 3},
-	"s": {7, 4},
-	"t": {8, 1},
-	"u": {8, 2},
-	"v": {8, 3},
-	"w": {9, 1},
-	"x": {9, 2},
-	"y": {9, 3},
-	"z": {9, 4},
-	" ": {0, 1},
+var charBindings = map[rune][2]int{
+	'a': {2, 1},
+	'b': {2, 2},
+	'c': {2, 3},
+	'd': {3, 1},
+	'e': {3, 2},
+	'f': {3, 3},
+	'g': {4, 1},
+	'h': {4, 2},
+	'i': {4, 3},
+	'j': {5, 1},
+	'k': {5, 2},
+	'l': {5, 3},
+	'm': {6, 1},
+	'n': {6, 2},
+	'o': {6, 3},
+	'p': {7, 1},
+	'q': {7, 2},
+	'r': {7, 3},
+	's': {7, 4},
+	't': {8, 1},
+	'u': {8, 2},
+	'v': {8, 3},
+	'w': {9, 1},
+	'x': {9, 2},
+	'y': {9, 3},
+	'z': {9, 4},
+	' ': {0, 1},
 }
 
-var keyBindings = map[int][]string{
-	0: {" "},
+var keyBindings = map[int][]rune{
+	0: {' '},
 	1: {},
-	2: {"a", "b", "c"},
-	3: {"d", "e", "f"},
-	4: {"g", "h", "i"},
-	5: {"j", "k", "l"},
-	6: {"m", "n", "o"},
-	7: {"p", "q", "r", "s"},
-	8: {"t", "u", "v"},
-	9: {"w", "x", "y", "z"},
+	2: {'a', 'b', 'c'},
+	3: {'d', 'e', 'f'},
+	4: {'g', 'h', 'i'},
+	5: {'j', 'k', 'l'},
+	6: {'m', 'n', 'o'},
+	7: {'p', 'q', 'r', 's'},
+	8: {'t', 'u', 'v'},
+	9: {'w', 'x', 'y', 'z'},
 }
 
-type encoder struct {
-	char      string
-	binding   int
-	repeat    int
-	isCapital bool
+type charEncoder struct {
+	char    rune
+	binding int
+	repeat  int
+	isUpper bool
 }
 
-func (c encoder) encode() string {
+func (c charEncoder) encode() string {
 	repeated := strings.Repeat(strconv.Itoa(c.binding), c.repeat)
 
-	if c.isCapital {
+	if c.isUpper {
 		repeated = string(UPPER_CASE_REPRESENTOR) + repeated
 	}
 
@@ -85,7 +83,7 @@ func runeToInt(c rune) int {
 	return d
 }
 
-func (c encoder) shouldSeparate(builder []string) bool {
+func (c charEncoder) shouldSeparate(builder []string) bool {
 	if len(builder) == 0 {
 		return false
 	}
@@ -112,136 +110,188 @@ func countChar(str string, c string, i, count int) (repeat, index int) {
 	return count, i
 }
 
-func decode(sentence string) string {
-	stringBuilder := []string{}
-	skipToIndex := 0
-	isNextUpper := false
-	isNextDigit := false
+type from3310Decoder struct {
+	input            string
+	builder          []string
+	isNextUpper      bool
+	isNextDigit      bool
+	nextIndexToCheck int
+}
 
-	for i, l := range sentence {
+func (d *from3310Decoder) build() string {
+	return strings.Join(d.builder, "")
+}
+
+func (d *from3310Decoder) append(s string) {
+	d.builder = append(d.builder, s)
+}
+
+func (d *from3310Decoder) skip(to ...int) {
+	if len(to) == 1 {
+		d.nextIndexToCheck = to[0]
+		return
+	}
+
+	d.nextIndexToCheck++
+}
+
+func (d *from3310Decoder) markNextUpper(isUpper bool) {
+	d.isNextUpper = isUpper
+}
+
+func (d *from3310Decoder) markNextDigit(isDigit bool) {
+	d.isNextDigit = isDigit
+}
+
+func (d *from3310Decoder) decode() {
+	for i, l := range d.input {
 		letter := string(l)
 
-		if i < skipToIndex {
+		if i < d.nextIndexToCheck {
 			continue
 		}
 
 		if unicode.IsDigit(l) {
-			if isNextDigit {
-				stringBuilder = append(stringBuilder, letter)
-
-				skipToIndex++
-				isNextDigit = false
+			if d.isNextDigit {
+				d.append(letter)
+				d.skip()
+				d.markNextDigit(false)
 				continue
 			}
 
 			charRep := keyBindings[runeToInt(l)]
 
 			if len(charRep) > 0 {
-				repeat, next := countChar(sentence, letter, skipToIndex, 0)
-				skipToIndex = next
-				letter := charRep[repeat-1]
+				repeat, next := countChar(d.input, letter, d.nextIndexToCheck, 0)
 
-				if isNextUpper {
+				letter := string(charRep[repeat-1])
+
+				if d.isNextUpper {
 					letter = strings.ToUpper(letter)
 				}
 
-				stringBuilder = append(stringBuilder, letter)
-
-				isNextUpper = false
+				d.append(letter)
+				d.markNextUpper(false)
+				d.skip(next)
 				continue
 			}
 
-			skipToIndex++
+			d.skip()
 			continue
 		}
 
 		if l == NUMBER_SPLITTER {
-			isNextDigit = true
-
-			skipToIndex++
+			d.markNextDigit(true)
+			d.skip()
 			continue
 		}
 
 		if l == UPPER_CASE_REPRESENTOR {
-			repeat, next := countChar(sentence, letter, skipToIndex, 0)
-			skipToIndex = next
+			repeat, next := countChar(d.input, letter, d.nextIndexToCheck, 0)
 
 			if repeat%2 != 0 {
 				repeat -= 1
-				isNextUpper = true
+				d.markNextUpper(true)
 			}
 
-			stringBuilder = append(
-				stringBuilder,
-				strings.Repeat(string(UPPER_CASE_REPRESENTOR), repeat/2),
-			)
-
+			d.append(strings.Repeat(string(UPPER_CASE_REPRESENTOR), repeat/2))
+			d.skip(next)
 			continue
 		}
 
-		stringBuilder = append(stringBuilder, letter)
-		skipToIndex++
+		d.append(letter)
+		d.skip()
 	}
-
-	return strings.Join(stringBuilder, "")
 }
 
-// encode takes a string in English and returns its 3310 representation
-func encode(sentence string) string {
-	stringBuilder := []string{}
+// decode takes a string in 3310 representation and returns its English value
+func decode(sentence string) string {
+	decoder := from3310Decoder{
+		input: sentence,
+	}
+	decoder.decode()
+	return decoder.build()
+}
 
-	for _, letter := range sentence {
-		charBinding := charBindings[strings.ToLower(string(letter))]
+type to3310Encoder struct {
+	input   string
+	builder []string
+}
+
+func (e *to3310Encoder) build() string {
+	return strings.Join(e.builder, "")
+}
+
+func (e *to3310Encoder) append(s string) {
+	e.builder = append(e.builder, s)
+}
+
+func (e *to3310Encoder) encode() {
+	for _, letter := range e.input {
+
+		charBinding := charBindings[unicode.ToLower(letter)]
 		binding := charBinding[0]
 		repeat := charBinding[1]
 
 		if binding == 0 && repeat == 0 {
 
 			if letter == UPPER_CASE_REPRESENTOR {
-				stringBuilder = append(stringBuilder, concatRunes(letter, letter))
-			} else {
-				if isNum := unicode.IsDigit(letter); isNum {
-
-					stringBuilder = append(stringBuilder, concatRunes(NUMBER_SPLITTER, letter))
-				} else {
-
-					stringBuilder = append(stringBuilder, string(letter))
-				}
+				e.append(concatRunes(letter, letter))
+				continue
 			}
 
-		} else {
-			isCap := unicode.IsUpper(letter)
-
-			c := encoder{
-				char:      string(letter),
-				binding:   binding,
-				repeat:    repeat,
-				isCapital: isCap,
+			if isNum := unicode.IsDigit(letter); isNum {
+				e.append(concatRunes(NUMBER_SPLITTER, letter))
+				continue
 			}
 
-			encodedChar := c.encode()
-
-			if shouldSeparate := c.shouldSeparate(stringBuilder); shouldSeparate {
-				encodedChar = string(SAME_CHAR_SEPARATOR) + encodedChar
-			}
-
-			stringBuilder = append(stringBuilder, encodedChar)
+			e.append(string(letter))
+			continue
 		}
-	}
 
-	return strings.Join(stringBuilder, "")
+		isUpper := unicode.IsUpper(letter)
+
+		c := charEncoder{
+			char:    letter,
+			binding: binding,
+			repeat:  repeat,
+			isUpper: isUpper,
+		}
+
+		encodedChar := c.encode()
+
+		if shouldSeparate := c.shouldSeparate(e.builder); shouldSeparate {
+			e.append(string(SAME_CHAR_SEPARATOR))
+		}
+
+		e.append(encodedChar)
+	}
+}
+
+// encode takes a string in English and returns its 3310 representation
+func encode(sentence string) string {
+	encoder := to3310Encoder{
+		input: sentence,
+	}
+	encoder.encode()
+
+	return encoder.build()
 }
 
 func main() {
-	fmt.Println(encode("iam"))
-	fmt.Println(decode(encode("iam")))
-	fmt.Println(encode("i am"))
-	fmt.Println(decode(encode("i am")))
+	tests := []string{
+		"iam",
+		"i am",
+		"Hi there, I miss you. I wish you were here!",
+		"amr_halim2008@yahoo.com",
+		"you are old",
+	}
 
-	fmt.Println(encode("Hi there, I miss you. I wish you were here!"))
-	fmt.Println(decode(encode("Hi there, I miss you. I wish you were here!")))
-	fmt.Println(encode("amr_HAlim2008@yahoo.com"))
-	fmt.Println(decode(encode("amr_HAlim2008@yahoo.com")))
+	for _, test := range tests {
+		fmt.Println(encode(test))
+		fmt.Println(decode(encode(test)))
+		fmt.Println()
+	}
 }
 
 /**
