@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 	"unicode"
@@ -204,8 +203,8 @@ func (d *from3310Decoder) decode() {
 	}
 }
 
-// decode takes a string in 3310 representation and returns its English value
-func decode(sentence string) string {
+// Decode takes a string in 3310 representation and returns its English value
+func Decode(sentence string) string {
 	decoder := from3310Decoder{
 		input: sentence,
 	}
@@ -268,8 +267,8 @@ func (e *to3310Encoder) encode() {
 	}
 }
 
-// encode takes a string in English and returns its 3310 representation
-func encode(sentence string) string {
+// Encode takes a string in English and returns its 3310 representation
+func Encode(sentence string) string {
 	encoder := to3310Encoder{
 		input: sentence,
 	}
@@ -277,55 +276,3 @@ func encode(sentence string) string {
 
 	return encoder.build()
 }
-
-func main() {
-	tests := []string{
-		"iam",
-		"i am",
-		"Hi there, I miss you. I wish you were here!",
-		"amr_halim2008@yahoo.com",
-		"you are old",
-	}
-
-	for _, test := range tests {
-		fmt.Println(encode(test))
-		fmt.Println(decode(encode(test)))
-		fmt.Println()
-	}
-}
-
-/**
-Key bindings:
-1 -> nothing
-2 -> abc
-3 -> def
-4 -> ghi
-5 -> jkl
-6 -> mno
-7 -> pgrs
-8 -> tuv
-9 -> wxyz
-0 -> space
-*/
-
-// Rules
-
-// How do we represent numbers?
-// Follow it with a space.
-// i.e. `1 2 844` -> 12 t h -> 12th
-
-// How do we represent two letters that come consecutively in the same word using the same key binding?
-// Prefix it with `1`.
-// i.e. 441444 -> 44 444 -> h i -> hi
-// i.e. 44144414144 -> 44 444 4 44 -> h i g h -> high
-// i.e. 616661666166 -> 6 666 666 66 -> m o o n -> moon
-
-// How do we represent upper case?
-// Prefix it with `_`.
-// i.e _5026 -> I ` ` a m -> I am
-
-// How do we represent special characters?
-// Use them, with below exceptions that have to be written twice to represent said character.
-// _ -> used for upper-casing a letter
-// i.e. `2 . 5 ` -> 2 . 5 -> 2.5
-// i.e. 2__22 -> a _ b -> 2_b
