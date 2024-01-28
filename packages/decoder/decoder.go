@@ -4,7 +4,7 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/AmrHalim/utils"
+	"utils"
 )
 
 var keyBindings = map[int][]rune{

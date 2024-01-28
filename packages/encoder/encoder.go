@@ -5,7 +5,7 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/AmrHalim/utils"
+	"utils"
 )
 
 var charBindings = map[rune][2]int{

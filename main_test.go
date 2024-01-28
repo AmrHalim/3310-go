@@ -3,8 +3,8 @@ package main
 import (
 	"testing"
 
-	"github.com/AmrHalim/decoder"
-	"github.com/AmrHalim/encoder"
+	"decoder"
+	"encoder"
 )
 
 var tests = []string{
