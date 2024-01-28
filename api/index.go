@@ -15,7 +15,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 				<head>
 					<meta charset="UTF-8">
 					<meta name="viewport" content="width=device-width, initial-scale=1.0">
-					<title>3310 Decoder in Golang!</title>
+					<title>3310 Encoder in Golang!</title>
 				</head>
 				<body>
 					<div style="display: grid; place-items: center; text-align: center;">

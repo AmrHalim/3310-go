@@ -63,7 +63,7 @@ func (c charEncoder) shouldSeparate(builder []string) bool {
 	lastBinding := builder[len(builder)-1]
 	lastRune := lastBinding[len(lastBinding)-1]
 
-	return c.binding == utils.RuneToInt(rune(lastRune))
+	return unicode.IsDigit(rune(lastRune)) && c.binding == utils.RuneToInt(rune(lastRune))
 }
 
 type to3310Encoder struct {
