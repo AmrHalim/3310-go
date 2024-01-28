@@ -27,7 +27,7 @@ Prefix it with a space literal ` `.
 
 #### Example
 
-- `12th` -> `12` `t` `h` -> ` 1` `2844` ` 12844`.
+- `12th` -> `1` `2` `t` `h` -> ` ` `1` ` ` `2` `8` `44` -> ` 1 2844`.
 
 ### How do we represent two letters that come consecutively in the same word using the same key binding?
 
