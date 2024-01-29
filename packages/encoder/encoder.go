@@ -55,20 +55,23 @@ func (c charEncoder) encode() string {
 	return repeated
 }
 
-func (c charEncoder) shouldSeparate(builder []string) bool {
-	if len(builder) == 0 {
+func (c charEncoder) shouldSeparate(e *to3310Encoder) bool {
+	if len(e.builder) == 0 {
 		return false
 	}
 
-	lastBinding := builder[len(builder)-1]
+	lastBinding := e.builder[len(e.builder)-1]
 	lastRune := lastBinding[len(lastBinding)-1]
 
-	return unicode.IsDigit(rune(lastRune)) && c.binding == utils.RuneToInt(rune(lastRune))
+	return unicode.IsDigit(rune(lastRune)) &&
+		c.binding == utils.RuneToInt(rune(lastRune)) &&
+		!e.isPrevDigit
 }
 
 type to3310Encoder struct {
-	input   string
-	builder []string
+	input       string
+	builder     []string
+	isPrevDigit bool
 }
 
 func (e *to3310Encoder) build() string {
@@ -77,6 +80,10 @@ func (e *to3310Encoder) build() string {
 
 func (e *to3310Encoder) append(s string) {
 	e.builder = append(e.builder, s)
+}
+
+func (e *to3310Encoder) markPrevDigit(isDigit bool) {
+	e.isPrevDigit = isDigit
 }
 
 func (e *to3310Encoder) encode() {
@@ -95,6 +102,7 @@ func (e *to3310Encoder) encode() {
 
 			if isNum := unicode.IsDigit(letter); isNum {
 				e.append(utils.ConcatRunes(utils.NUMBER_SPLITTER, letter))
+				e.markPrevDigit(true)
 				continue
 			}
 
@@ -113,11 +121,12 @@ func (e *to3310Encoder) encode() {
 
 		encodedChar := c.encode()
 
-		if shouldSeparate := c.shouldSeparate(e.builder); shouldSeparate {
+		if shouldSeparate := c.shouldSeparate(e); shouldSeparate {
 			e.append(string(utils.SAME_CHAR_SEPARATOR))
 		}
 
 		e.append(encodedChar)
+		e.markPrevDigit(false)
 	}
 }
 
